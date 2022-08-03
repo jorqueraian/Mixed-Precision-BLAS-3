@@ -40,7 +40,6 @@ lb:
 	$(LEC_CC) -o gemm_testing gemm_testing.c mixed_gemm.c -D_ESV6464 -lesslsmp6464 -lxlsmp $(LEC_CPU_INC) $(LEC_CPU_LIB) $(LEC_COMP_LIB) $(LEC_COMP2_LIB) $(LEC_RUN_LIB) -O0 -qsmp=omp
 
 eb: 
-	gcc -o trsm_testing trsm_testing.c mixed_trsm.c mixed_gemm.c -I /opt/intel/oneapi/mkl/2022.1.0/include -L /opt/intel/oneapi/mkl/2022.1.0/lib/intel64 -L /opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64 -L /opt/intel/oneapi/intelpython/python3.9/lib -O3 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lpthread -lm -ldl -fopenmp -liomp5
 	gcc -o gemm_testing gemm_testing.c mixed_gemm.c -I /opt/intel/oneapi/mkl/2022.1.0/include -L /opt/intel/oneapi/mkl/2022.1.0/lib/intel64 -L /opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64 -L /opt/intel/oneapi/intelpython/python3.9/lib -O0 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lpthread -lm -ldl -fopenmp -liomp5 -lquadmath
 
 ebc:
