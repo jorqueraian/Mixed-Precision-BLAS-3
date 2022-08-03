@@ -1,6 +1,8 @@
 #include "mixed_gemm.h"
 
-// The functions exist for 
+// These functions exist for mimicing TF32 on CPU and half precision GEMM
+// NOTE: the behavior of these function WILL vary between hardware. 
+// These are designed to work on x86 arch or any arch that follows the same floating point storage(these have only been tested on Intel Xeon processor and AMD EPYC 7763)
 static unsigned int as_uint(const float x) 
 {
     return *(unsigned int*)&x;
@@ -17,6 +19,7 @@ static float hacky_truncate(const float x)
     return hacky_truncate_r(x, 13);
 }
 
+// trcuates r bits of float mantissa
 static float hacky_truncate_r(const float x, const int r)
 {
     return as_float((as_uint(x)>>r)<<r);
@@ -73,6 +76,7 @@ void i_hgemm(float *A, float *B, float *C, const int A_rows, const int A_cols, c
 {
     // mimics half precision GEMM kernel.
     // formats inputs into half, multiplies and adds (full precision fma) and then returns C as half.
+    // the error in this function is likly dominated by the size of half precision mantissa in output
     int i, k, j;
     float temp;
 
@@ -84,11 +88,13 @@ void i_hgemm(float *A, float *B, float *C, const int A_rows, const int A_cols, c
             temp = hacky_truncate(A[i * A_cols + k]);
             for (j = 0; j < B_cols; j++) 
             {
+                //fp32 fma
                 C[i * B_cols + j] = C[i * B_cols + j] + temp * hacky_truncate(B[k * B_cols + j]);
             }
         }
     }
-
+    
+    // return output with fp16 data
     #pragma omp parallel for default(shared) private(i)
     for (i = 0; i < A_rows * B_cols; i++)
     {
@@ -99,7 +105,6 @@ void i_hgemm(float *A, float *B, float *C, const int A_rows, const int A_cols, c
 
 void cublas_hgemm(float *A, float *B, float *C, const int A_rows, const int A_cols, const int B_cols)
 {
-    // I was struggling to get this to work for some reason. So TODO: do
     fprintf(stderr, "Not implemented\n");
 }
 
@@ -199,11 +204,12 @@ void i_tf32_gemm(float *A_i, float *B_i, float *C, const int A_rows, const int A
     {
         for (k = 0; k < A_cols; k++) 
         {
+            // ensures mantissa is truncated to 10 bits
             temp = hacky_truncate(A[i * A_cols + k]);
             for (j = 0; j < B_cols; j++) 
             {
-                // tf32 compute mode uses 32bit here. I am using hack_truncate to prevent any possible CPU fma usage here that may allow for higher precsion FMA
-                // Honestly the truncs may not be needed here.
+                // tf32 compute mode uses 32bit fma here. I am using hacky_truncate to prevent any possible CPU fma usage here that may allow for higher precsion FMA
+                // Probably not needed
                 C[i * B_cols + j] = hacky_truncate_r(hacky_truncate_r(temp*B[k * B_cols + j], 0) + C[i * B_cols + j], 0);
             }
         }
@@ -254,7 +260,7 @@ void cublas_tf32_gemm(float *A, float *B, float *C, const int A_rows, const int 
 
 
 // Uses fp16 kernel with fp32 accum. This should theretically give identitcal performance outputs to TF32 compute mode
-// I was unable to get this to work on V100 hardware. And have not used on A100
+// I was unable to get this to work on V100 hardware. And have not tested on A100.
 void cublas_fp16_gemm(float *A, float *B, float *C, const int A_rows, const int A_cols, const int B_cols)
 {
     #if CUDA_USABLE == 1

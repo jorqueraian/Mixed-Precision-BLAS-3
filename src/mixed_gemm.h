@@ -28,14 +28,10 @@
 #endif
 
 #ifdef __has_include
-    #if __has_include(<essl.h>)
-        #include <essl.h> // Seems to have some weird behavior.
-    #elif __has_include("mkl.h")
+    #if __has_include("mkl.h")
         #include "mkl.h"
         #include "mkl_lapacke.h"
     #endif
-#else
-    #include <essl.h>
 #endif
 
 typedef __float128 quad;

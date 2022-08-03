@@ -302,7 +302,7 @@ void run_precision_cuda_tests(int init_size, int max_size, int multiplier, int i
     // compute tf32 functions(both cublas and CPU mimics) on square matricies of sizes between init_size and max_size, incrementing in multiples of multiplier
     // For each matrix size, the reported error will be the avarage over its_per_size iterations
     // File will be saves to ../data/save_file_<error_metric char>-norm
-    #if CUDA_USABLE == 0
+    #if CUDA_USABLE == 1
     int size, r, i, k, it;
     double denom;
 
